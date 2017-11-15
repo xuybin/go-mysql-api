@@ -12,6 +12,7 @@ import (
 	_ "gopkg.in/doug-martin/goqu.v4/adapters/mysql"
 	"github.com/xuybin/go-mysql-api/adapter"
 	"strconv"
+	"strings"
 )
 
 // MysqlAPI
@@ -25,15 +26,34 @@ type MysqlAPI struct {
 // NewMysqlAPI create new MysqlAPI instance
 func NewMysqlAPI(dbURI string, useInformationSchema bool) (api *MysqlAPI) {
 	api = &MysqlAPI{}
-	api.GetConnectionPool(dbURI)
-	api.useInformationSchema = useInformationSchema
-	lib.Logger.Infof("connected to mysql with conn_str: %s", dbURI)
-	api.UpdateAPIMetadata()
-	lib.Logger.Infof("retrived metadata from mysql database: %s", api.databaseMetadata.DatabaseName)
-	api.sql = &SQL{goqu.New("mysql", api.connection), api.databaseMetadata}
-	return
+	err:=createDatabase(api,dbURI)
+	if err!=nil{
+		panic(err)
+	}else {
+		api.GetConnectionPool(dbURI)
+		api.useInformationSchema = useInformationSchema
+		lib.Logger.Infof("connected to mysql with conn_str: %s", dbURI)
+		api.UpdateAPIMetadata()
+		lib.Logger.Infof("retrived metadata from mysql database: %s", api.databaseMetadata.DatabaseName)
+		api.sql = &SQL{goqu.New("mysql", api.connection), api.databaseMetadata}
+		return
+	}
 }
 
+func  createDatabase(api *MysqlAPI,dbURI string) (err error) {
+	result:=strings.LastIndex(dbURI,"/")
+	if result >= 0 && result+1<len(dbURI){
+		dbName:=string([]byte(dbURI)[result+1:len(dbURI)])
+		dbURI= string([]byte(dbURI)[0:result+1])
+		api.GetConnectionPool(dbURI)
+		_, err = api.connection.Exec("CREATE DATABASE IF NOT EXISTS "+dbName)
+		api.connection.Close()
+		api.connection=nil
+	}else {
+		err=fmt.Errorf("dataSourceName:%s doesn't exist dbName",dbURI)
+	}
+	return
+}
 // Connection return
 func (api *MysqlAPI) Connection() *sql.DB {
 	return api.connection
