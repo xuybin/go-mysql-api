@@ -1,7 +1,7 @@
 # go-mysql-api
 
 [![Build Status](https://travis-ci.org/xuybin/go-mysql-api.svg?branch=master)](https://travis-ci.org/xuybin/go-mysql-api)
-provide restful api for mysql/mariadb database
+provide restful api for mysql or mariadb database
 
 Based on [Echo](https://github.com/labstack/echo), [goqu](https://github.com/doug-martin/goqu), [cli](https://github.com/mkideal/cli) and [go-mysql-driver](https://github.com/go-sql-driver/mysql)
 
